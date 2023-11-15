@@ -58,7 +58,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 });
 
 // test a protected route
-exports.test = ((req, res, next) => {
+exports.test = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     msg: 'You are authorized',

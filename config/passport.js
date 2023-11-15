@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const Auth = require('../controllers/authController');
+const Auth = require('../models/auth');
 const Jwtstrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 
@@ -14,11 +14,11 @@ const options = {
   algorithms: ['RS256'],
 };
 
-const strategy = new Jwtstrategy(options, (payload, done) => {
+const strategy = new Jwtstrategy(options, async (payload, done) => {
   try {
-    const user = Auth.findOne({ _id: payload.sub });
+    const user = await Auth.findOne({ _id: payload.sub });
     if (user) {
-      return done(null, user);
+      return done(null, payload);
     } else {
       return done(null, false);
     }
