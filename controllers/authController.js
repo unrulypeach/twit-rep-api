@@ -38,7 +38,6 @@ exports.login = asyncHandler(async (req, res, next) => {
         const isValid = validatePw(req.body.password, user.hash, user.salt);
 
         if (isValid) {
-
           const tokenObject = issueJWT(user);
           res.status(200).json({
             success: true,
@@ -46,11 +45,8 @@ exports.login = asyncHandler(async (req, res, next) => {
             token: tokenObject.token,
             expires: tokenObject.expires
           });
-
         } else {
-
           res.status(401).json({ success: false, msg: "Wrong password"});
-
         }
       }).catch((err) => {
         next(err);

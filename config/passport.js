@@ -9,7 +9,6 @@ const PUB_KEY = fs.readFileSync(pathToKey, 'utf-8');
 
 const options = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  // jwtFromRequest: ExtractJwt.fromAuthHeaderWithScheme('JWT'),
   secretOrKey: PUB_KEY,
   algorithms: ['RS256'],
 };
@@ -18,7 +17,7 @@ const strategy = new Jwtstrategy(options, async (payload, done) => {
   try {
     const user = await Auth.findOne({ _id: payload.sub });
     if (user) {
-      return done(null, payload);
+      return done(null, user);
     } else {
       return done(null, false);
     }
