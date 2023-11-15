@@ -14,7 +14,7 @@ router.post('/signup', auth_controller.signup);
 router.post('/login', auth_controller.login);
 
 // test a protected route
-router.get('/test', passport.authenticate('jwt', {session: false}, (err) => { err ? next(err) : next()}), auth_controller.test);
+router.get('/test', passport.authenticate('jwt', {session: false}), auth_controller.test);
 
 
 module.exports = router;
