@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const followSchema = new Schema({
-  user_id: { type: Schema.Types.ObjectId, ref: 'User' },
-  follow_id: { type: Schema.Types.ObjectId, ref: 'User' },
+  uid: { type: Schema.Types.ObjectId, ref: 'User' },
+  followid: { type: Schema.Types.ObjectId, ref: 'User' },
   follow_date: { type: Date, default: Date.now },
 });
 

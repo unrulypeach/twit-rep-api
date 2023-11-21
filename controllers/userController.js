@@ -63,8 +63,8 @@ exports.update_profile = asyncHandler(async(req, res, next) => {
 exports.get_followers_list = asyncHandler(async(req, res, next) => {
   const user = req.params.id;
   const userID = await User.findOne({ userhandle: user }, '_id').exec();
-  const followers = await Follow.find({ follow_id: userID._id }, 'user_id').populate({
-    path: 'user_id',
+  const followers = await Follow.find({ followid: userID._id }, 'uid').populate({
+    path: 'uid',
     select: { username: 1, userhandle: 1}
   }).exec();
   res.json(followers);
@@ -73,15 +73,15 @@ exports.get_followers_list = asyncHandler(async(req, res, next) => {
 exports.get_followers_count = asyncHandler(async(req, res, next) => {
   const user = req.params.id;
   const userID = await User.findOne({ userhandle: user }, '_id').exec();
-  const followerCount = await Follow.countDocuments({ follow_id: userID._id }).exec();
+  const followerCount = await Follow.countDocuments({ followid: userID._id }).exec();
   res.json(followerCount);
 });
 
 exports.get_following_list = asyncHandler(async(req, res, next) => {
   const user = req.params.id;
   const userID = await User.findOne({ userhandle: user }, '_id').exec();
-  const following = await Follow.find({ user_id: userID._id }, 'follow_id').populate({
-    path: 'follow_id',
+  const following = await Follow.find({ uid: userID._id }, 'followid').populate({
+    path: 'followid',
     select: { username: 1, userhandle: 1}
   }).exec();
   res.json(following);
@@ -90,22 +90,22 @@ exports.get_following_list = asyncHandler(async(req, res, next) => {
 exports.get_following_count = asyncHandler(async(req, res, next) => {
   const user = req.params.id;
   const userID = await User.findOne({ userhandle: user }, '_id').exec();
-  const followingCount = await Follow.countDocuments({ user_id: userID._id }).exec();
+  const followingCount = await Follow.countDocuments({ uid: userID._id }).exec();
   res.json(followingCount);
 });
 
 exports.follow = asyncHandler(async(req, res, next) => {
   const follow_target = req.body.account;
-  const user_id = req.user.uid;
+  const uid = req.user.uid;
 
   const newFollow = new Follow({
-    user_id,
-    follow_id: follow_target,
+    uid,
+    followid: follow_target,
   });
 
   const followDoc = {
-    user_id,
-    follow_id: follow_target,
+    uid,
+    followid: follow_target,
   };
 
   // findOneAndUpdate guarantees to double follow
@@ -124,11 +124,11 @@ exports.follow = asyncHandler(async(req, res, next) => {
 
 exports.unfollow = asyncHandler(async(req, res, next) => {
   const unfollow_target = req.body.account;
-  const user_id = req.user.uid;
+  const uid = req.user.uid;
 
   const doc = {
-    user_id,
-    follow_id: unfollow_target,
+    uid,
+    followid: unfollow_target,
   };
 
   const unfollowRes = await Follow.findOneAndDelete(doc).exec();
