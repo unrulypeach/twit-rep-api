@@ -9,7 +9,8 @@ const UserSchema = new Schema({
   joinedDate: { type: Date, default: Date.now },
   // authID: { type: Schema.Types.ObjectId, required: true},
 
-  backgroundPic: String,
+  profile_pic: String,
+  header_pic: String,
   bio: String,
   website: String,
   location: String,

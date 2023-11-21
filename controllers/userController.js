@@ -3,8 +3,7 @@ const Follow = require('../models/follow');
 const asyncHandler = require('express-async-handler');
 const { body, validationResult } = require('express-validator');
 const { generatePw, validatePw } = require('../utils/passwordUtils');
-const { ref, uploadBytesResumable } = require('firebase/storage');
-const storage = require('../config/firebase');
+
 
 exports.set_userhandle = [
   body('userhandle')
@@ -47,10 +46,18 @@ exports.get_profile = asyncHandler(async (req, res, next) => {
 
 exports.update_profile = asyncHandler(async(req, res, next) => {
   const { bio, website, location, profile_pic, header_pic } = req.body;
-
-  // if pics, upload pics to firebase
-  if (profile_pic)
-  // then save links along with other info to mongodb
+  // pictures will be uploaded client side with firebase sdk
+  // _pic will therefore be links
+  const user = req.user.uid;
+  const updateUser = {
+    ...(bio) && {bio},
+    ...(website) && {website},
+    ...(location) && {location},
+    ...(profile_pic) && {profile_pic},
+    ...(header_pic) && {header_pic},
+  };
+  const updatedDoc = await User.findOneAndUpdate({ _id: user }, updateUser, { new: true })
+  res.json(updatedDoc);
 });
 
 exports.get_followers_list = asyncHandler(async(req, res, next) => {

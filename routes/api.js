@@ -6,58 +6,29 @@ const passport = require('passport');
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
+  res.send('api is online');
 });
 
 router.post('/signup', auth_controller.signup);
 
 router.post('/login', auth_controller.login);
 
-// test a protected route
-router.get('/test', passport.authenticate('jwt', {session: false}), auth_controller.test);
+router.post('/sethandle', passport.authenticate('jwt', {session: false}), user_controller.set_userhandle);
 
-// router.get('/post/:id', )
+router.post('/follow', passport.authenticate('jwt', {session: false}), user_controller.follow);
 
+router.delete('/follow', passport.authenticate('jwt', {session: false}), user_controller.unfollow);
 
-// TODO
-router.get('/user/:id', user_controller.profile);
+router.get('/user/:id', user_controller.get_profile);
 
-// TODO
-router.put('/user/:id', user_controller.update_profile);
+router.put('/user/:id', passport.authenticate('jwt', {session: false}), user_controller.update_profile);
 
-// TODO
-// router.post('/user/:id', user_controller.create_profile);
+router.get('/user/:id/followers', user_controller.get_followers_list);
 
-// TODO
-router.get('/user/:id/followers', user_controller.followers);
+router.get('/user/:id/followers_count', user_controller.get_followers_count);
 
-// TODO
-router.get('/user/:id/following', user_controller.following);
+router.get('/user/:id/following', user_controller.get_following_list);
 
-// TODO
-router.post('/user/:id/follow', user_controller.follow);
-
-// TODO
-router.delete('/user/:id/follow', user_controller.unfollow);
-
-/* const authenticateWithJwt = (req, res, next) => {
-  passport.authenticate('jwt', {session: false}, async (error, jwt_payload) => {
-      if (error) {
-          return next(error);
-      }
-
-      try {
-        const user = await Auth.findOne({id: jwt_payload.sub});
-        next(user);
-      } catch (err) {
-        return next(err || new Error('Could not find user'));
-      }
-
-  })(req, res, next);
-};
-
-router.get('/protected', authenticateWithJwt, (req, res, next) => {
-  res.status(200).json({message: 'it works!', req});
-}); */
+router.get('/user/:id/following_count', user_controller.get_following_count);
 
 module.exports = router;
