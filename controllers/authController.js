@@ -5,28 +5,6 @@ const { body, validationResult } = require('express-validator');
 const { generatePw, validatePw } = require('../utils/passwordUtils');
 const issueJWT = require('../utils/jwtUtils');
 
-/* exports.signup = asyncHandler(async (req, res, next) => {
-  const saltHash = generatePw(req.body.password);
-
-  const salt = saltHash.salt;
-  const hash = saltHash.hash;
-
-  const newUser = new Auth({
-    username: req.body.username,
-    hash,
-    salt,
-  });
-
-  const result = await newUser.save();
-  const jwt = issueJWT(result);
-  res.json({ 
-    success: true,
-    result,
-    token: jwt.token,
-    expiresIn: jwt.expires,
-  });
-}); */
-
 exports.signup = [
   body('name', 'error with name')
     .escape()
@@ -37,7 +15,15 @@ exports.signup = [
     .escape()
     .trim()
     .isEmail()
-    .normalizeEmail(),
+    .normalizeEmail()
+    .custom(async (value) => {
+      const emailUsed = await Auth.findOne({ email: value }).exec();
+      if (emailUsed) {
+        throw new Error('Email already in use')
+      } else {
+        return true
+      }
+    }),
   body('birthdate', 'error with birthdate')
     .escape()
     .toDate(),
@@ -50,25 +36,25 @@ exports.signup = [
     const { name, email, birthdate, password } = req.body;
     const saltHash = generatePw(password);
 
+    const newUser = new User({
+      username: name,
+      birthdate,
+      email,
+    });
+
     const newAuth = new Auth({
       email,
       hash: saltHash.hash,
       salt: saltHash.salt,
+      uid: newUser._id,
     });
 
     if (!errors.isEmpty()) {
-      res.status(500).json({ errors });
+      res.status(400).json(errors);
     } else {
       const authRes = await newAuth.save();
 
       if (authRes) {
-        const newUser = new User({
-          username: name,
-          birthdate,
-          email,
-          authID: authRes._id
-        });
-
         const userRes = await newUser.save();
         const jwt = issueJWT(userRes);
 
@@ -84,7 +70,7 @@ exports.signup = [
 
 exports.login = asyncHandler(async (req, res, next) => {
   try {
-    const user = await Auth.findOne({ username: req.body.username });
+    const user = await Auth.findOne({ email: req.body.email }).exec();
     if (!user) {
       res.status(401).json({
         success: false,
@@ -108,12 +94,4 @@ exports.login = asyncHandler(async (req, res, next) => {
   } catch(err) {
     next(err);
   };
-});
-
-// test a protected route
-exports.test = asyncHandler(async (req, res, next) => {
-  res.status(200).json({
-    success: true,
-    msg: 'You are authorized',
-  });
 });
