@@ -15,7 +15,7 @@ const options = {
 
 const strategy = new Jwtstrategy(options, async (payload, done) => {
   try {
-    const user = await Auth.findOne({ _id: payload.sub });
+    const user = await Auth.findOne({ _id: payload.sub }, 'uid').exec();
     if (user) {
       return done(null, user);
     } else {
