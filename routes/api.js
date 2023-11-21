@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth_controller = require('../controllers/authController');
 const user_controller = require('../controllers/userController');
+const post_controller = require('../controllers/postController');
 const passport = require('passport');
 
 /* GET users listing. */
@@ -31,4 +32,27 @@ router.get('/user/:id/following', user_controller.get_following_list);
 
 router.get('/user/:id/following_count', user_controller.get_following_count);
 
+// TODO
+router.post('/like', passport.authenticate('jwt', {session: false}), post_controller.like_post);
+
+// TODO
+router.delete('/like', passport.authenticate('jwt', {session: false}), post_controller.unlike_post);
+
+// TODO
+router.post('/post/create', passport.authenticate('jwt', {session: false}), post_controller.create_post);
+
+// TODO
+router.delete('/post/:id', passport.authenticate('jwt', {session: false}), post_controller.delete_post);
+
+// TODO
+router.get('/post/:id', post_controller.get_post);
+
+// TODO
+router.get('/post/:id/likes_count', post_controller.get_post_likes_count);
+
+// TODO
+router.get('/post/:id/likes', post_controller.get_post_likes_list);
+
+// TODO
+router.post('/post/:id/reply', passport.authenticate('jwt', {session: false}), post_controller.reply_post);
 module.exports = router;
