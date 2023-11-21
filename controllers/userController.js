@@ -1,86 +1,131 @@
 const User = require('../models/user');
-const Auth = require('../models/auth');
+const Follow = require('../models/follow');
 const asyncHandler = require('express-async-handler');
 const { body, validationResult } = require('express-validator');
 const { generatePw, validatePw } = require('../utils/passwordUtils');
-const issueJWT = require('../utils/jwtUtils');
+const { ref, uploadBytesResumable } = require('firebase/storage');
+const storage = require('../config/firebase');
 
-exports.create_profile = [
-  body('name')
-    .escape()
+exports.set_userhandle = [
+  body('userhandle')
     .trim()
+    .escape()
     .isString()
-    .notEmpty(),
-  body('email')
-    .escape()
-    .trim()
-    .isEmail()
-    .normalizeEmail(),
-  body('birthdate')
-    .escape()
-    .toDate()
-    .isDate(),
-  body('password')
-    .trim()
-    .isLength({ min: 5 }),
-  asyncHandler(async(req, res, next) => {
+    .custom(value => !/\s/.test(value))
+    .withMessage('No spaces are allowed')
+    .custom(async(value) => {
+      const handleExists = await User.findOne({ userhandle: value }).exec();
+      if (handleExists) {
+        throw new Error('Userhandle taken, please enter another one');
+      } else {
+        return true;
+      }
+    }), 
+  asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
-    const { name, email, birthdate, password } = req.body;
-    const saltHash = generatePw(password);
-
-    const newAuth = new Auth({
-      email,
-      hash: saltHash.hash,
-      salt: saltHash.salt,
-    });
 
     if (!errors.isEmpty()) {
-      res.status(500).json({ errors });
+      res.status(400).json(errors);
     } else {
-      const authRes = await newAuth.save();
-
-      if (authRes) {
-        const newUser = new User({
-          username: name,
-          birthdate,
-          email,
-          authID: authRes._id
-        });
-
-        const userRes = await newUser.save();
-        const jwt = issueJWT()
-
-        res.status(200).json({
-          user: userRes,
-          token: jwt.token,
-          expiresIn: jwt.expires,
-        })
-      }
-
+      const userId = req.user.uid;
+      const userDoc = await User.findOneAndUpdate(
+        { _id: userId }, 
+        { userhandle: req.body.userhandle },
+        { returnOriginal: false }
+      ).exec();
+      res.json(userDoc);
     }
-})];
+  })
+];
 
-exports.profile = asyncHandler(async (req, res, next) => {
-  res.send('TODO: (GET) Profile');
+exports.get_profile = asyncHandler(async (req, res, next) => {
+  const userhandle = req.params.id;
+
+  const userLookup = await User.findOne({ userhandle }).exec();
+  res.json(userLookup);
 });
 
 exports.update_profile = asyncHandler(async(req, res, next) => {
-  res.send('TODO: (UPDATE) Profile');
+  const { bio, website, location, profile_pic, header_pic } = req.body;
+
+  // if pics, upload pics to firebase
+  if (profile_pic)
+  // then save links along with other info to mongodb
 });
 
-exports.followers = asyncHandler(async(req, res, next) => {
-  res.send('TODO: (GET) Followers list');
+exports.get_followers_list = asyncHandler(async(req, res, next) => {
+  const user = req.params.id;
+  const userID = await User.findOne({ userhandle: user }, '_id').exec();
+  const followers = await Follow.find({ follow_id: userID._id }, 'user_id').populate({
+    path: 'user_id',
+    select: { username: 1, userhandle: 1}
+  }).exec();
+  res.json(followers);
 });
 
-exports.following = asyncHandler(async(req, res, next) => {
-  res.send('TODO: (GET) Following list');
+exports.get_followers_count = asyncHandler(async(req, res, next) => {
+  const user = req.params.id;
+  const userID = await User.findOne({ userhandle: user }, '_id').exec();
+  const followerCount = await Follow.countDocuments({ follow_id: userID._id }).exec();
+  res.json(followerCount);
+});
+
+exports.get_following_list = asyncHandler(async(req, res, next) => {
+  const user = req.params.id;
+  const userID = await User.findOne({ userhandle: user }, '_id').exec();
+  const following = await Follow.find({ user_id: userID._id }, 'follow_id').populate({
+    path: 'follow_id',
+    select: { username: 1, userhandle: 1}
+  }).exec();
+  res.json(following);
+});
+
+exports.get_following_count = asyncHandler(async(req, res, next) => {
+  const user = req.params.id;
+  const userID = await User.findOne({ userhandle: user }, '_id').exec();
+  const followingCount = await Follow.countDocuments({ user_id: userID._id }).exec();
+  res.json(followingCount);
 });
 
 exports.follow = asyncHandler(async(req, res, next) => {
-  res.send('TODO: (POST) Follow');
+  const follow_target = req.body.account;
+  const user_id = req.user.uid;
+
+  const newFollow = new Follow({
+    user_id,
+    follow_id: follow_target,
+  });
+
+  const followDoc = {
+    user_id,
+    follow_id: follow_target,
+  };
+
+  // findOneAndUpdate guarantees to double follow
+  const followRes = await Follow.findOneAndUpdate(
+    followDoc,
+    {
+      $setOnInsert: newFollow
+    },
+    {
+      upsert: true,
+      new: true,
+    } 
+  ).exec();
+  res.json(followRes);
 });
 
 exports.unfollow = asyncHandler(async(req, res, next) => {
-  res.send('TODO: (DELETE) Follow');
+  const unfollow_target = req.body.account;
+  const user_id = req.user.uid;
+
+  const doc = {
+    user_id,
+    follow_id: unfollow_target,
+  };
+
+  const unfollowRes = await Follow.findOneAndDelete(doc).exec();
+  const resolves = unfollowRes === null ? "Already not following" : "Succesful Unfollow"
+  res.json({ msg: resolves, unfollowRes });
 });
 
