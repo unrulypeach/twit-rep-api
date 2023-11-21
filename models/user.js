@@ -7,7 +7,7 @@ const UserSchema = new Schema({
 
   birthdate: { type: Date, required: true },
   joinedDate: { type: Date, default: Date.now },
-  authID: { type: Schema.Types.ObjectId, required: true},
+  // authID: { type: Schema.Types.ObjectId, required: true},
 
   backgroundPic: String,
   bio: String,
