@@ -6,7 +6,7 @@ const UserSchema = new Schema({
   userhandle: String,
 
   birthdate: { type: Date, required: true },
-  joinedDate: { type: Date, default: Date.now },
+  joined_date: { type: Date, default: Date.now },
   // authID: { type: Schema.Types.ObjectId, required: true},
 
   profile_pic: String,
