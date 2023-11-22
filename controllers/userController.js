@@ -27,10 +27,9 @@ exports.set_userhandle = [
       res.status(400).json(errors);
     } else {
       const userId = req.user.uid;
-      const userDoc = await User.findOneAndUpdate(
+      const userDoc = await User.updateOne(
         { _id: userId }, 
-        { userhandle: req.body.userhandle },
-        { returnOriginal: false }
+        { userhandle: req.body.userhandle }
       ).exec();
       res.json(userDoc);
     }
@@ -44,6 +43,7 @@ exports.get_profile = asyncHandler(async (req, res, next) => {
   res.json(userLookup);
 });
 
+// TODO - WRITE VALIDATOR FUNCTION
 exports.update_profile = asyncHandler(async(req, res, next) => {
   const { bio, website, location, profile_pic, header_pic } = req.body;
   // pictures will be uploaded client side with firebase sdk
@@ -56,7 +56,7 @@ exports.update_profile = asyncHandler(async(req, res, next) => {
     ...(profile_pic) && {profile_pic},
     ...(header_pic) && {header_pic},
   };
-  const updatedDoc = await User.findOneAndUpdate({ _id: user }, updateUser, { new: true })
+  const updatedDoc = await User.updateOne({ _id: user }, updateUser).exec();
   res.json(updatedDoc);
 });
 
