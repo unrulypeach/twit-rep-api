@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const Post = require('../models/post');
 const Follow = require('../models/follow');
 const asyncHandler = require('express-async-handler');
 const { body, validationResult } = require('express-validator');
@@ -36,7 +37,7 @@ exports.set_userhandle = [
   })
 ];
 
-exports.get_profile = asyncHandler(async (req, res, next) => {
+exports.get_user_profile = asyncHandler(async(req, res, next) => {
   const userhandle = req.params.id;
 
   const userLookup = await User.findOne({ userhandle }).exec();
@@ -44,7 +45,7 @@ exports.get_profile = asyncHandler(async (req, res, next) => {
 });
 
 // TODO - WRITE VALIDATOR FUNCTION
-exports.update_profile = asyncHandler(async(req, res, next) => {
+exports.update_user_profile = asyncHandler(async(req, res, next) => {
   const { bio, website, location, profile_pic, header_pic } = req.body;
   // pictures will be uploaded client side with firebase sdk
   // _pic will therefore be links

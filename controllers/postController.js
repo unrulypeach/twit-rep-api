@@ -110,3 +110,16 @@ exports.get_post_likes_list = asyncHandler(async (req, res, next) => {
 
   res.json(likesList);
 });
+
+exports.get_user_posts = asyncHandler(async(req, res, next) => {
+  const user = req.params.id;
+
+  const query = await Post.find({ uid: user }).sort({ date: 'desc' }).limit(10).exec();
+  res.json(query);
+});
+
+exports.get_frontpage_posts = asyncHandler(async(req, res, next) => {
+  const query = await Post.find({}).sort({ likes: 'desc', date: 'desc' }).limit(10).exec();
+
+  res.json(query);
+});

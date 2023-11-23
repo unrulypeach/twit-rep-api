@@ -20,10 +20,6 @@ router.post('/follow', passport.authenticate('jwt', {session: false}), user_cont
 
 router.delete('/follow', passport.authenticate('jwt', {session: false}), user_controller.unfollow);
 
-router.get('/user/:id', user_controller.get_profile);
-
-router.put('/user/:id', passport.authenticate('jwt', {session: false}), user_controller.update_profile);
-
 router.get('/user/:id/followers', user_controller.get_followers_list);
 
 router.get('/user/:id/followers_count', user_controller.get_followers_count);
@@ -32,11 +28,13 @@ router.get('/user/:id/following', user_controller.get_following_list);
 
 router.get('/user/:id/following_count', user_controller.get_following_count);
 
-// TODO
-// router.get('/post/user', post_controller.get_user_posts)
+router.get('/user/:id/posts', post_controller.get_user_posts)
 
-// TODO
-// router.get('/homepage', post_controller.get_frontpage_posts)
+router.get('/user/:id', user_controller.get_user_profile);
+
+router.put('/user/:id', passport.authenticate('jwt', {session: false}), user_controller.update_user_profile);
+
+router.get('/post/homepage', post_controller.get_frontpage_posts)
 
 router.delete('/post/del', passport.authenticate('jwt', {session: false}), post_controller.delete_post);
 
