@@ -14,6 +14,10 @@ router.post('/signup', auth_controller.signup);
 
 router.post('/login', auth_controller.login);
 
+router.post('/logout', auth_controller.logout);
+
+router.post('/refresh', auth_controller.refresh_access_token);
+
 router.post('/sethandle', passport.authenticate('jwt', {session: false}), user_controller.set_userhandle);
 
 router.post('/follow', passport.authenticate('jwt', {session: false}), user_controller.follow);
@@ -41,6 +45,9 @@ router.delete('/post/del', passport.authenticate('jwt', {session: false}), post_
 router.post('/post/create', passport.authenticate('jwt', {session: false}), post_controller.create_post);
 
 router.post('/post/reply', passport.authenticate('jwt', {session: false}), post_controller.reply_post);
+
+// TODO
+// router.delete('/post/reply', passport.authenticate('jwt', {session: false}), post_controller.delete_reply)
 
 router.post('/post/like', passport.authenticate('jwt', {session: false}), post_controller.like_post);
 
