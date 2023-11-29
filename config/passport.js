@@ -1,15 +1,12 @@
-const fs = require('fs');
-const path = require('path');
 const Auth = require('../models/auth');
 const Jwtstrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 
-const pathToKey = path.join(__dirname, '..', 'id_rsa_pub.pem');
-const PUB_KEY = fs.readFileSync(pathToKey, 'utf-8');
+require('dotenv').config();
 
 const options = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: PUB_KEY,
+  secretOrKey: process.env.PUB_ACCESS_KEY,
   algorithms: ['RS256'],
 };
 
@@ -19,10 +16,10 @@ const strategy = new Jwtstrategy(options, async (payload, done) => {
     if (user) {
       return done(null, user);
     } else {
-      return done(null, false);
+      return done(null, false, { message: 'User not found'});
     }
   } catch(err) {
-    done(err, false);
+    done(err, false, { message: 'Authentication error'});
   };
 });
 

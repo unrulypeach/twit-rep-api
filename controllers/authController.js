@@ -3,7 +3,9 @@ const User = require('../models/user');
 const asyncHandler = require('express-async-handler');
 const { body, validationResult } = require('express-validator');
 const { generatePw, validatePw } = require('../utils/passwordUtils');
-const issueJWT = require('../utils/jwtUtils');
+const { issueAcessToken, issueRefreshToken } = require('../utils/jwtUtils');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 exports.signup = [
   body('name', 'error with name')
@@ -56,12 +58,21 @@ exports.signup = [
 
       if (authRes) {
         const userRes = await newUser.save();
-        const jwt = issueJWT(userRes);
+        const accessTokenObject = issueAcessToken(userRes);
+        const refreshTokenObject = issueRefreshToken(userRes);
+        await Auth.findByIdAndUpdate( userRes._id, {
+          $push: { tokens: refreshTokenObject }
+        });
+  
+        res.cookie('refresh_token', refreshTokenObject, {
+          httpOnly: true,
+          maxAge: 60 * 60 * 1000 * 24 * 14,
+          secure: true,
+          sameSite: 'none'
+        });
 
         res.status(200).json({
-          user: userRes,
-          token: jwt.token,
-          expiresIn: jwt.expires,
+          token: accessTokenObject,
         })
       }
 
@@ -80,12 +91,22 @@ exports.login = asyncHandler(async (req, res, next) => {
     const isValid = validatePw(req.body.password, user.hash, user.salt);
 
     if (isValid) {
-      const tokenObject = issueJWT(user);
-      const userData = await User.findById(user.uid);
+      const accessTokenObject = issueAcessToken(user);
+      const refreshTokenObject = issueRefreshToken(user);
+      await Auth.findByIdAndUpdate( user._id, {
+        $push: { tokens: refreshTokenObject }
+      });
+
+      res.cookie('refresh_token', refreshTokenObject, {
+        httpOnly: true,
+        maxAge: 60 * 60 * 1000 * 24 * 14,
+        secure: true,
+        sameSite: 'none'
+      });
+
       res.status(200).json({
-        user: userData,
-        token: tokenObject.token,
-        expires: tokenObject.expires
+        // user,
+        access_token: accessTokenObject,
       });
     } else {
       res.status(401).json({ msg: "Wrong password"});
@@ -96,7 +117,46 @@ exports.login = asyncHandler(async (req, res, next) => {
 });
 
 // TODO
-exports.logout = asyncHandler(async (req, res, next) => {});
+exports.logout = asyncHandler(async (req, res, next) => {
+  const { refresh_token } = req.cookies;
+
+  if (!refresh_token) return res.status(401).end();
+
+  // remove from db TODO
+  const removeTokenFromDb = await Auth.findOneAndUpdate({ tokens: refresh_token }, {
+    $pullAll: { tokens: refresh_token }
+  });
+
+  // remove from cookie
+  res.clearCookie('refresh_token', refreshTokenObject, {
+    httpOnly: true,
+    maxAge: 60 * 60 * 1000 * 24 * 14,
+    secure: true,
+    sameSite: 'none'
+  });
+
+  removeTokenFromDb
+    ? res.status(200)
+    : res.status(500).end();
+});
 
 // TODO
-exports.refresh_token = asyncHandler(async (req, res, next) => {})
+exports.refresh_access_token = asyncHandler(async (req, res, next) => {
+  const { refresh_token } = req.cookies;
+
+  if (!refresh_token) return res.status(401).end();
+
+  // check if token in DB
+  const tokenInDb = await Auth.findOne({ tokens: refresh_token });
+  
+  if (!tokenInDb) {
+    // redirect user to login
+    return res.status(403);
+  }
+  jwt.verify(refresh_token, process.env.PUB_REFRESH_KEY, (err, user) => {
+    if (err) return res.sendStatus(403)
+    const access_token = issueAcessToken(tokenInDb);
+    res.json({ access_token })
+  });
+  
+});

@@ -1,28 +1,44 @@
 const jwt = require('jsonwebtoken');
-const path = require('path');
-const fs = require('fs');
-const pathToKey = path.join(__dirname, '..', 'id_rsa_priv.pem');
-const PRIV_KEY = fs.readFileSync(pathToKey, 'utf-8');
+require('dotenv').config();
 
-function issueJWT(user) {
-  const _id = user._id;
+// user is data from auths
+// _id, uid, email, hash, salt
+const pak = process.env.PRIV_ACCESS_KEY;
+const prk = process.env.PRIV_REFRESH_KEY;
+function issueAcessToken(user) {
+  const { _id } = user;
 
-  const expiresIn = '1d';
+  const expiresIn = '10m';
 
   const payload = {
     sub: _id,
     iat: Date.now()
   };
 
-  const signedToken = jwt.sign(payload, PRIV_KEY, {
+  const signedToken = jwt.sign(payload, pak, {
     expiresIn,
     algorithm: 'RS256',
   });
 
-  return {
-    token: "Bearer " + signedToken,
-    expires: expiresIn,
-  }
+  return signedToken;
 };
 
-module.exports = issueJWT;
+function issueRefreshToken(user) {
+  const { _id } = user;
+
+  const expiresIn = '14d';
+
+  const payload = {
+    sub: _id,
+    iat: Date.now()
+  };
+
+  const signedToken = jwt.sign(payload, prk, {
+    expiresIn,
+    algorithm: 'RS256',
+  });
+  
+  return signedToken;
+};
+
+module.exports = { issueAcessToken, issueRefreshToken };

@@ -6,6 +6,7 @@ const AuthSchema = new Schema({
   hash: String,
   salt: String,
   uid: { type: Schema.Types.ObjectId, ref: 'User' },
+  tokens: [String],
 });
 
 module.exports = mongoose.model('Auth', AuthSchema);
