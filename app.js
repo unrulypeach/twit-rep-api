@@ -6,7 +6,12 @@ const logger = require('morgan');
 const passport = require('passport');
 const cors = require('cors');
 const app = express();
-app.use(cors()); 
+app.use(cors({ 
+  credentials: true,
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: ['http://localhost:8000', 'http://localhost:5173']
+})); 
 app.use(passport.initialize());
 
 require('dotenv').config();
