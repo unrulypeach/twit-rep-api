@@ -91,8 +91,9 @@ exports.login = asyncHandler(async (req, res, next) => {
     const isValid = validatePw(req.body.password, user.hash, user.salt);
 
     if (isValid) {
-      const accessTokenObject = issueAcessToken(user);
-      const refreshTokenObject = issueRefreshToken(user);
+      const userData = await User.findById(user.uid);
+      const accessTokenObject = issueAcessToken(user, userData);
+      const refreshTokenObject = issueRefreshToken(user, userData);
       await Auth.findByIdAndUpdate( user._id, {
         $push: { tokens: refreshTokenObject }
       });
@@ -103,9 +104,8 @@ exports.login = asyncHandler(async (req, res, next) => {
         secure: true,
         sameSite: 'none'
       });
-
       res.status(200).json({
-        // user,
+        // user: userData,
         access_token: accessTokenObject,
       });
     } else {

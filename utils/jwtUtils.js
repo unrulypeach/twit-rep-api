@@ -5,13 +5,14 @@ require('dotenv').config();
 // _id, uid, email, hash, salt
 const pak = process.env.PRIV_ACCESS_KEY;
 const prk = process.env.PRIV_REFRESH_KEY;
-function issueAcessToken(user) {
-  const { _id } = user;
+function issueAcessToken(userAuth, userRes) {
+  const { _id } = userAuth;
 
   const expiresIn = '10m';
 
   const payload = {
     sub: _id,
+    user: userRes,
     iat: Date.now()
   };
 
@@ -23,13 +24,14 @@ function issueAcessToken(user) {
   return signedToken;
 };
 
-function issueRefreshToken(user) {
-  const { _id } = user;
+function issueRefreshToken(userAuth, userRes) {
+  const { _id } = userAuth;
 
   const expiresIn = '14d';
 
   const payload = {
     sub: _id,
+    user: userRes,
     iat: Date.now()
   };
 
