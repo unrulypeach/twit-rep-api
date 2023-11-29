@@ -73,7 +73,6 @@ exports.login = asyncHandler(async (req, res, next) => {
     const user = await Auth.findOne({ email: req.body.email }).exec();
     if (!user) {
       res.status(401).json({
-        success: false,
         msg: 'User does not exist',
       });
     }
@@ -82,16 +81,22 @@ exports.login = asyncHandler(async (req, res, next) => {
 
     if (isValid) {
       const tokenObject = issueJWT(user);
+      const userData = await User.findById(user.uid);
       res.status(200).json({
-        success: true,
-        user,
+        user: userData,
         token: tokenObject.token,
         expires: tokenObject.expires
       });
     } else {
-      res.status(401).json({ success: false, msg: "Wrong password"});
+      res.status(401).json({ msg: "Wrong password"});
     }
   } catch(err) {
     next(err);
   };
 });
+
+// TODO
+exports.logout = asyncHandler(async (req, res, next) => {});
+
+// TODO
+exports.refresh_token = asyncHandler(async (req, res, next) => {})

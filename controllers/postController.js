@@ -119,7 +119,14 @@ exports.get_user_posts = asyncHandler(async(req, res, next) => {
 });
 
 exports.get_frontpage_posts = asyncHandler(async(req, res, next) => {
-  const query = await Post.find({}).sort({ likes: 'desc', date: 'desc' }).limit(10).exec();
+  const query = await Post.find({})
+    .sort({ likes: 'desc', date: 'desc' })
+    .limit(10)
+    .populate({
+      path: 'uid',
+      select: { username: 1, userhandle: 1, profile_pic: 1}
+    })
+    .exec();
 
   res.json(query);
 });

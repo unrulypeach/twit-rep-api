@@ -6,7 +6,7 @@ const logger = require('morgan');
 const passport = require('passport');
 const cors = require('cors');
 const app = express();
-app.options('*', cors()); 
+app.use(cors()); 
 app.use(passport.initialize());
 
 require('dotenv').config();
@@ -17,8 +17,6 @@ require('./config/passport')(passport);
 
 const indexRouter = require('./routes/index');
 const apiRouter = require('./routes/api');
-
-
 
 app.use(logger('dev'));
 app.use(express.json());
