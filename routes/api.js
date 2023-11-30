@@ -16,7 +16,7 @@ router.post('/login', auth_controller.login);
 
 router.post('/logout', auth_controller.logout);
 
-router.post('/refresh', auth_controller.refresh_access_token);
+router.get('/refresh', auth_controller.refresh_access_token);
 
 router.post('/sethandle', passport.authenticate('jwt', {session: false}), user_controller.set_userhandle);
 
