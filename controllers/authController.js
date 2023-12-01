@@ -58,13 +58,13 @@ exports.signup = [
 
       if (authRes) {
         const userRes = await newUser.save();
-        const accessTokenObject = issueAcessToken(userRes);
-        const refreshTokenObject = issueRefreshToken(userRes);
-        await Auth.findByIdAndUpdate( userRes._id, {
+        const accessTokenObject = issueAcessToken(newAuth, userRes);
+        const refreshTokenObject = issueRefreshToken(newAuth, userRes);
+        await Auth.findByIdAndUpdate( newAuth._id, {
           $push: { tokens: refreshTokenObject }
         });
   
-        res.cookie('refresh_token', refreshTokenObject, {
+        res.cookie('refresh', refreshTokenObject, {
           httpOnly: true,
           maxAge: 60 * 60 * 1000 * 24 * 14,
           secure: true,
@@ -72,8 +72,8 @@ exports.signup = [
         });
 
         res.status(200).json({
-          token: accessTokenObject,
-        })
+          access_token: accessTokenObject,
+        });
       }
 
     }
@@ -98,7 +98,7 @@ exports.login = asyncHandler(async (req, res, next) => {
         $push: { tokens: refreshTokenObject }
       });
 
-      res.cookie('refresh_token', refreshTokenObject, {
+      res.cookie('refresh', refreshTokenObject, {
         httpOnly: true,
         maxAge: 60 * 60 * 1000 * 24 * 14,
         secure: true,
@@ -118,17 +118,17 @@ exports.login = asyncHandler(async (req, res, next) => {
 
 // TODO
 exports.logout = asyncHandler(async (req, res, next) => {
-  const { refresh_token } = req.cookies;
+  const { refresh } = req.cookies;
 
-  if (!refresh_token) return res.status(401).end();
+  if (!refresh) return res.status(401).end();
 
   // remove from db TODO
-  const removeTokenFromDb = await Auth.findOneAndUpdate({ tokens: refresh_token }, {
-    $pullAll: { tokens: refresh_token }
+  const removeTokenFromDb = await Auth.findOneAndUpdate({ tokens: refresh }, {
+    $pullAll: { tokens: refresh }
   });
 
   // remove from cookie
-  res.clearCookie('refresh_token', refreshTokenObject, {
+  res.clearCookie('refresh', refresh, {
     httpOnly: true,
     maxAge: 60 * 60 * 1000 * 24 * 14,
     secure: true,
@@ -142,21 +142,28 @@ exports.logout = asyncHandler(async (req, res, next) => {
 
 // TODO
 exports.refresh_access_token = asyncHandler(async (req, res, next) => {
-  const { refresh_token } = req.cookies;
-
-  if (!refresh_token) return res.status(401).end();
+  const { refresh } = req.cookies;
+  
+  if (!refresh) return res.status(401).end();
 
   // check if token in DB
-  const tokenInDb = await Auth.findOne({ tokens: refresh_token });
+  const tokenInDb = await Auth.findOne({ tokens: refresh });
+  // TODO: need to check if refresh expired
   
   if (!tokenInDb) {
     // redirect user to login
     return res.status(403);
   }
-  jwt.verify(refresh_token, process.env.PUB_REFRESH_KEY, (err, user) => {
+
+  jwt.verify(refresh, process.env.PUB_REFRESH_KEY, async (err, user) => {
     if (err) return res.sendStatus(403)
-    const access_token = issueAcessToken(tokenInDb);
-    res.json({ access_token })
+    try {
+      const user = await User.findById(tokenInDb.uid)
+      const access_token = issueAcessToken(tokenInDb, user);
+      res.json({ access_token })
+    } catch(err) {
+      console.error(err)
+    }
   });
   
 });
