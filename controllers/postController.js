@@ -1,5 +1,6 @@
 const Post = require('../models/post');
 const asyncHandler = require('express-async-handler');
+const { body, validationResult } = require('express-validator');
 
 exports.get_post = asyncHandler(async (req, res, next) => {
   const postid = req.params.id;
@@ -21,44 +22,67 @@ exports.get_post = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.create_post = asyncHandler(async (req, res, next) => {
-  const { content, image } = req.body;
-  const user = req.user.uid;
+exports.create_post = [
+  body('content')
+    .escape()
+    .isString()
+    .isLength({ max: 280 })
+    .withMessage('your post cannot exceed 280 characters'),
+  body('image')
+    .escape()
+    .trim(),
+  asyncHandler(async (req, res, next) => {
+    const { content, image } = req.body;
+    const user = req.user.uid;
 
-  const newPost = new Post({
-    ...(content) && {content},
-    ...(image) && {image},
-    uid: user,
-  });
+    const newPost = new Post({
+      ...(content) && {content},
+      ...(image) && {image},
+      uid: user,
+    });
 
-  const postRes = await newPost.save();
+    const postRes = await newPost.save();
 
-  res.json(postRes);
-});
+    res.json(postRes);
+  })
+];
 
-exports.reply_post = asyncHandler(async (req, res, next) => {
-  const { content, image, postid } = req.body;
-  const user = req.user.uid;
+exports.reply_post = [
+  body('content')
+    .escape()
+    .isString()
+    .isLength({ max: 280 })
+    .withMessage('your post cannot exceed 280 characters'),
+  body('image')
+    .escape()
+    .trim(),
+  body('postid')
+    .escape()
+    .trim(),
+  asyncHandler(async (req, res, next) => {
+    const { content, image, postid } = req.body;
+    const user = req.user.uid;
 
-  const newPost = new Post({
-    ...(content) && {content},
-    ...(image) && {image},
-    uid: user,
-  });
+    const newPost = new Post({
+      ...(content) && {content},
+      ...(image) && {image},
+      uid: user,
+    });
 
-  // add comment to postid (previous post)
-  const postRes = await newPost.save();
-  const addComment = await Post.updateOne(
-    { _id: postid },
-    {
-      $push: {
-        comments: newPost._id
-        }
-    }
-  ).exec();
+    // add comment to postid (previous post)
+    const postRes = await newPost.save();
+    const addComment = await Post.updateOne(
+      { _id: postid },
+      {
+        $push: {
+          comments: newPost._id
+          }
+      }
+    ).exec();
 
-  res.json({postRes, addComment});
-});
+    res.json({postRes, addComment});
+  })
+]
 
 exports.delete_post = asyncHandler(async (req, res, next) => {
   const { postid } = req.body;
