@@ -8,10 +8,9 @@ const cors = require('cors');
 const app = express();
 app.use(cors({ 
   credentials: true,
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  origin: ['http://localhost:8000', 'http://localhost:5173']
+  origin: true
 })); 
+
 app.use(passport.initialize());
 
 require('dotenv').config();
