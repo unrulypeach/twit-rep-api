@@ -10,6 +10,8 @@ router.get('/', function(req, res, next) {
   res.send('api is online');
 });
 
+router.get('/validate', passport.authenticate('jwt', {session: false}), auth_controller.validate_access_token);
+
 router.post('/signup', auth_controller.signup);
 
 router.post('/login', auth_controller.login);
