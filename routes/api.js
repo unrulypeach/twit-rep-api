@@ -20,9 +20,13 @@ router.get('/refresh', auth_controller.refresh_access_token);
 
 router.post('/sethandle', passport.authenticate('jwt', {session: false}), user_controller.set_userhandle);
 
+router.post('/checkhandle', passport.authenticate('jwt', {session: false}), user_controller.check_userhandle);
+
 router.post('/follow', passport.authenticate('jwt', {session: false}), user_controller.follow);
 
 router.delete('/follow', passport.authenticate('jwt', {session: false}), user_controller.unfollow);
+
+router.post('/following', passport.authenticate('jwt', {session: false}), user_controller.is_following);
 
 router.get('/user/:id/followers', user_controller.get_followers_list);
 
@@ -35,6 +39,8 @@ router.get('/user/:id/following_count', user_controller.get_following_count);
 router.get('/user/:id/posts', post_controller.get_user_posts)
 
 router.get('/user/:id', user_controller.get_user_profile);
+
+router.get('/user/:id/short', user_controller.get_user_profile_short);
 
 router.put('/user/:id', passport.authenticate('jwt', {session: false}), user_controller.update_user_profile);
 
