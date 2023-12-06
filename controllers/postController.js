@@ -1,68 +1,65 @@
 const Post = require('../models/post');
+const User = require('../models/user');
 const asyncHandler = require('express-async-handler');
 const { body, validationResult } = require('express-validator');
+const { postContentValidator, postImageValidator, postidValidator } = require('../utils/validators');
 
 exports.get_post = asyncHandler(async (req, res, next) => {
   const postid = req.params.id;
-
-  const post = await Post.findById(postid).populate([{
-    path: 'uid',
-    select: { username: 1, userhandle: 1, profile_pic: 1}
-  }, {
-    path: 'comments',
-    populate: {
+  const post = await Post
+    .findById(postid)
+    .populate([{
       path: 'uid',
-      select: { username: 1, userhandle: 1, profile_pic: 1}    
-    }
-  }]).exec();
+      select: { username: 1, userhandle: 1, profile_pic: 1}
+    }, {
+      path: 'comments',
+      populate: {
+        path: 'uid',
+        select: { username: 1, userhandle: 1, profile_pic: 1}    
+      }
+    }])
+    .exec();
 
-  res.json({
-    post,
-    likes: post.likes_count,
-  });
+  res.json(post);
 });
 
 exports.create_post = [
-  body('content')
-    .escape()
-    .isString()
-    .isLength({ max: 280 })
-    .withMessage('your post cannot exceed 280 characters'),
-  body('image')
-    .escape()
-    .trim(),
+  postContentValidator,
+  postImageValidator,
   asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json(errors)
+    };
+
     const { content, image } = req.body;
     const user = req.user.uid;
-
+    
     const newPost = new Post({
       ...(content) && {content},
       ...(image) && {image},
       uid: user,
     });
-
+    
     const postRes = await newPost.save();
-
+    
     res.json(postRes);
   })
 ];
 
 exports.reply_post = [
-  body('content')
-    .escape()
-    .isString()
-    .isLength({ max: 280 })
-    .withMessage('your post cannot exceed 280 characters'),
-  body('image')
-    .escape()
-    .trim(),
-  body('postid')
-    .escape()
-    .trim(),
+  postContentValidator,
+  postImageValidator,
+  postidValidator,
   asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+    
+    if (!errors.isEmpty()) {
+      return res.status(400).json(errors)
+    }
     const { content, image, postid } = req.body;
     const user = req.user.uid;
-
     const newPost = new Post({
       ...(content) && {content},
       ...(image) && {image},
@@ -84,62 +81,104 @@ exports.reply_post = [
   })
 ]
 
-exports.delete_post = asyncHandler(async (req, res, next) => {
-  const { postid } = req.body;
+exports.delete_post = [
+  postidValidator,
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
 
-  const delPost = await Post.findByIdAndDelete(postid).exec();
+    if (!errors.isEmpty()) {
+      return res.status(400).json(errors)
+    };
 
-  res.json(delPost)
-});
+    const { postid } = req.body;
+    const delPost = await Post.findByIdAndDelete(postid).exec();
 
-exports.like_post = asyncHandler(async (req, res, next) => {
-  const { postid } = req.body;
-  const user = req.user.uid;
+    res.json(delPost)
+  })
+];
 
-  const updatePost = await Post.updateOne(
-    { _id: postid },
-    {
-      $addToSet: {
-        likes: user
+exports.like_post = [
+  postidValidator,
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json(errors)
+    };
+
+    const { postid } = req.body;
+    const user = req.user.uid;
+
+    const updatePost = await Post.updateOne(
+      { _id: postid },
+      {
+        $addToSet: {
+          likes: user
+        }
       }
-    }
-  ).exec();
+    ).exec();
 
-  res.json(updatePost);
-});
+    res.json(updatePost);
+  })
+];
 
-exports.unlike_post = asyncHandler(async (req, res, next) => {
-  const { postid } = req.body;
-  const user = req.user.uid;
+exports.unlike_post = [
+  postidValidator,
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
 
-  const updatePost = await Post.updateOne(
-    { _id: postid },
-    {
-      $pull: {
-        likes: user
+    if (!errors.isEmpty()) {
+      return res.status(400).json(errors)
+    };
+
+    const { postid } = req.body;
+    const user = req.user.uid;
+
+    const updatePost = await Post.updateOne(
+      { _id: postid },
+      {
+        $pull: {
+          likes: user
+        }
       }
-    }
-  ).exec();
+    ).exec();
 
-  res.json(updatePost);
-});
+    res.json(updatePost);
+  })
+];
 
-exports.get_post_likes_list = asyncHandler(async (req, res, next) => {
-  const { postid } = req.body;
+exports.get_post_likes_list = [
+  postidValidator,
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
 
-  const likesList = await Post.findOne({_id: postid}).select('likes -_id').populate({
-    path: 'likes',
-    select: { username: 1, userhandle: 1, profile_pic: 1, _id: 0 }
-  }).exec();
+    if (!errors.isEmpty()) {
+      return res.status(400).json(errors)
+    };
 
-  res.json(likesList);
-});
+    const { postid } = req.body;
+
+    const likesList = await Post.findOne({_id: postid}).select('likes -_id').populate({
+      path: 'likes',
+      select: { username: 1, userhandle: 1, profile_pic: 1, _id: 0 }
+    }).exec();
+
+    res.json(likesList);
+  })
+];
 
 exports.get_user_posts = asyncHandler(async(req, res, next) => {
-  const user = req.params.id;
+  const userId = req.params.id;
 
-  const query = await Post.find({ uid: user }).sort({ date: 'desc' }).limit(10).exec();
-  res.json(query);
+  const query = await Post
+    .find({ uid: userId })
+    .sort({ date: 'desc' })
+    .limit(10)
+    .exec();
+  const user = await User
+    .findById(userId, { username: 1, userhandle: 1, profile_pic: 1})
+    .exec();
+  res.json({user, posts: query});
 });
 
 exports.get_frontpage_posts = asyncHandler(async(req, res, next) => {
