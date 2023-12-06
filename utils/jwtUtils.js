@@ -13,7 +13,7 @@ function issueAcessToken(userAuth, userRes) {
   const payload = {
     sub: _id,
     user: userRes,
-    iat: Date.now()
+    iat: Math.floor(Date.now() / 1000)
   };
 
   const signedToken = jwt.sign(payload, pak, {
@@ -32,7 +32,7 @@ function issueRefreshToken(userAuth, userRes) {
   const payload = {
     sub: _id,
     user: userRes,
-    iat: Date.now()
+    iat: Math.floor(Date.now() / 1000)
   };
 
   const signedToken = jwt.sign(payload, prk, {
