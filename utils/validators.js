@@ -19,9 +19,10 @@ exports.userhandleValidator = [
 
 exports.postContentValidator = [
   body('content')
+    .trim()
     .escape()
     .isString()
-    .isLength({ max: 280 })
+    .isLength({ min: 1, max: 280 })
     .withMessage('your post cannot exceed 280 characters')
 ]
 
