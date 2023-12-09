@@ -1,7 +1,7 @@
 const Post = require('../models/post');
 const User = require('../models/user');
 const asyncHandler = require('express-async-handler');
-const { body, validationResult } = require('express-validator');
+const { validationResult } = require('express-validator');
 const { postContentValidator, postImageValidator, postidValidator } = require('../utils/validators');
 
 exports.get_post = asyncHandler(async (req, res, next) => {
