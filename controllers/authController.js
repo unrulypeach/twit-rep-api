@@ -128,36 +128,36 @@ exports.login = [
 // TODO
 exports.logout = asyncHandler(async (req, res, next) => {
   const { refresh } = req.cookies;
-
   if (!refresh) return res.status(401).end();
 
-  // remove from db TODO
-  const removeTokenFromDb = await Auth.findOneAndUpdate({ tokens: refresh }, {
-    $pullAll: { tokens: refresh }
-  });
-
-  // remove from cookie
-  res.clearCookie('refresh', refresh, {
-    httpOnly: true,
-    maxAge: 60 * 60 * 1000 * 24 * 14,
-    secure: true,
-    sameSite: 'none'
-  });
-
-  removeTokenFromDb
-    ? res.status(200)
-    : res.status(500).end();
+  await Auth
+    .findOneAndUpdate({ tokens: refresh }, {
+      $pull: { tokens: refresh }
+    })
+    .then(() => {
+      // remove from cookie
+      res.clearCookie('refresh', refresh, {
+        httpOnly: true,
+        maxAge: 60 * 60 * 1000 * 24 * 14,
+        secure: true,
+        sameSite: 'none'
+      });
+      res.status(200).end()
+    })
+    .catch((error) => {
+      res.status(500).json(error)
+    })
+    
 });
 
-// TODO
 exports.refresh_access_token = asyncHandler(async (req, res, next) => {
   const { refresh } = req.cookies;
   
+  // no refresh token 
   if (!refresh) return res.status(401).json({error: 'no refresh token provided'});
 
   // check if token in DB
   const tokenInDb = await Auth.findOne({ tokens: refresh });
-  // TODO: need to check if refresh expired and issue new one
   
   if (!tokenInDb) {
     // redirect user to login
@@ -165,14 +165,28 @@ exports.refresh_access_token = asyncHandler(async (req, res, next) => {
   }
 
   jwt.verify(refresh, process.env.PUB_REFRESH_KEY, async (err, user) => {
-    if (err) return res.sendStatus(403).json({error: 'token is invalid'})
+    if (err) return res.sendStatus(403).json({error: 'token could not be verified', err})
     try {
       const user = await User.findById(tokenInDb.uid)
       const access_token = issueAcessToken(tokenInDb, user);
-      res.json({ access_token })
+      res.json({ access_token, user })
     } catch(err) {
       console.error(err)
     }
   });
   
 });
+
+// TODO
+exports.refresh_refresh_token = asyncHandler(async (req, res, next) => {
+
+  // remove old token from db
+  // remove old token from cookie
+  // issue new token
+})
+
+exports.validate_access_token = asyncHandler(async (req, res, next) => {
+  const uid = req.user.uid;
+  const user = await User.findById(uid);
+  res.json(user);
+})
