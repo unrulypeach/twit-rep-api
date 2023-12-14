@@ -8,7 +8,8 @@ const PostSchema = new Schema({
   date: { type: Date, default: Date.now },
   uid: { type: Schema.Types.ObjectId, ref: User, required: true },
   comments: [{ type: Schema.Types.ObjectId, ref: 'Post'}],
-  likes: [{ type: Schema.Types.ObjectId, ref: 'User' }]
+  likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  parent: Schema.Types.ObjectId,
 });
 
 PostSchema.virtual('likes_count').get(function() {
