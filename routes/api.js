@@ -54,9 +54,6 @@ router.post('/post/create', passport.authenticate('jwt', {session: false}), post
 
 router.post('/post/reply', passport.authenticate('jwt', {session: false}), post_controller.reply_post);
 
-// TODO
-// router.delete('/post/reply', passport.authenticate('jwt', {session: false}), post_controller.delete_reply)
-
 router.post('/post/like', passport.authenticate('jwt', {session: false}), post_controller.like_post);
 
 router.delete('/post/like', passport.authenticate('jwt', {session: false}), post_controller.unlike_post);
