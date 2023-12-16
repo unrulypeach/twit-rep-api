@@ -62,7 +62,7 @@ exports.update_user_profile = asyncHandler(async(req, res, next) => {
     ...(header_pic) && {header_pic},
     ...(username) && {username},
   };
-  const updatedDoc = await User.updateOne({ _id: user }, updateUser).exec();
+  const updatedDoc = await User.findOneAndUpdate({ _id: user }, updateUser).exec();
   res.json(updatedDoc);
 });
 
