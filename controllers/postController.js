@@ -64,6 +64,7 @@ exports.reply_post = [
       ...(content) && {content},
       ...(image) && {image},
       uid: user,
+      parent: postid,
     });
 
     // add comment to postid (previous post)
@@ -92,8 +93,17 @@ exports.delete_post = [
 
     const { postid } = req.body;
     const delPost = await Post.findByIdAndDelete(postid).exec();
+    // check if it is a comment and delete its reference    
+    const commentRef = await Post.updateOne(
+      { comments: postid },
+      {
+        $pull: {
+          comments: postid
+        }
+      }
+    ).exec();
 
-    res.json(delPost)
+    res.json({delPost, commentRef})
   })
 ];
 
