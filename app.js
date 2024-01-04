@@ -6,10 +6,13 @@ const logger = require('morgan');
 const passport = require('passport');
 const cors = require('cors');
 const app = express();
-app.use(cors({ 
+const corsOptions = { 
   credentials: true,
-  origin: true
-})); 
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: ['http://localhost:8000', 'http://localhost:5173']
+};
+app.use(cors(corsOptions)); 
 
 app.use(passport.initialize());
 
