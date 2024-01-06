@@ -12,6 +12,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
   origin: ['http://localhost:8000', 'http://localhost:5173', 'https://twitter-replica-orpin.vercel.app', 'https://twit-rep-api.onrender.com', 'https://twitter-replica-qv5mmm3dz-ls-projects-6ac02d07.vercel.app' ]
 };
+
 app.use(cors(corsOptions)); 
 
 app.use(passport.initialize());
